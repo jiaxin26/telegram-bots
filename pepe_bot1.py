@@ -149,7 +149,7 @@ async def main_async():
 
     # 启动机器人
     print("机器人正在启动...")
-    application.run_polling()
+    await application.run_polling()
 
 def main():
     """启动 Telegram 机器人"""
