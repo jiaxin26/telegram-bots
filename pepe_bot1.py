@@ -136,8 +136,10 @@ async def main_async():
     # 添加 /start 命令处理器
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
-    getlogs_handler = CommandHandler('list', list)
-    application.add_handler(getlogs_handler)
+
+    # 添加 /list 命令处理器
+    list_handler = CommandHandler('list', list_logs)
+    application.add_handler(list_handler)
 
     # 添加回调查询处理器
     button_handler = CallbackQueryHandler(button_callback)
@@ -153,7 +155,22 @@ async def main_async():
 
 def main():
     """启动 Telegram 机器人"""
-    asyncio.run(main_async())
+    # 获取当前事件循环
+    loop = asyncio.get_event_loop()
+    
+    try:
+        # 检查事件循环是否已经运行
+        if loop.is_running():
+            # 如果事件循环已经运行，创建一个任务
+            loop.create_task(main_async())
+        else:
+            # 如果事件循环未运行，运行主协程
+            loop.run_until_complete(main_async())
+    except RuntimeError as e:
+        if "already running" in str(e):
+            loop.create_task(main_async())
+        else:
+            raise
 
 if __name__ == '__main__':
     main()
