@@ -13,7 +13,16 @@ TOKEN: Final = '7523077804:AAEWFJuuqYYO14TkBAwCuVvWdQWWeZaGoR4'
 BOT_USERNAME: Final = '@pepeboost_soll_bot'
 LOG_FILE_PATH: Final = 'user_messages.txt'
 ADMIN_USER_ID = 5551837706
-PORT = int(os.environ.get('PORT', 8080))
+PORT = int(os.environ.get('PORT', '8080'))
+
+# Get the Render URL from environment variables
+WEBHOOK_HOST = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if not WEBHOOK_HOST:
+    WEBHOOK_HOST = os.environ.get('RENDER_EXTERNAL_URL', '')
+    if WEBHOOK_HOST.startswith('https://'):
+        WEBHOOK_HOST = WEBHOOK_HOST[8:]  # Remove 'https://' prefix
+
+WEBHOOK_URL = f'https://{WEBHOOK_HOST}/{TOKEN}' if WEBHOOK_HOST else None
 
 # Initialize bot application
 bot_application = None
@@ -24,9 +33,18 @@ async def web_handler(request):
 
 async def setup_webhook(app, bot_token):
     """Setup webhook for the bot"""
-    webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_URL', 'your-app-name.onrender.com')}/{bot_token}"
-    await bot_application.bot.set_webhook(webhook_url)
-    
+    if not WEBHOOK_URL:
+        print("Warning: WEBHOOK_URL is not set. Webhook setup skipped.")
+        return
+        
+    print(f"Setting webhook URL: {WEBHOOK_URL}")
+    try:
+        await bot_application.bot.set_webhook(WEBHOOK_URL)
+        print("Webhook setup successful!")
+    except Exception as e:
+        print(f"Failed to set webhook: {e}")
+        raise
+
 async def handle_webhook(request):
     """Handle incoming webhook updates"""
     try:
@@ -36,7 +54,7 @@ async def handle_webhook(request):
     except Exception as e:
         return web.Response(text=f"Error: {e}", status=500)
 
-# Your existing command handlers
+# [Previous command handlers remain the same...]
 async def list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """处理 /getlogs 命令，发送 user_messages.txt 的内容"""
     user = update.effective_user
@@ -85,7 +103,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     elif query.data == 'help':
         response_text = (
             "⭐️ What should I do if the bot is lagging?\n"
-            # ... (保持原有的帮助文本内容)
+            # ... (help text remains the same)
             "🐦 https://twitter.com/PepeBoost888"
         )
     else:
@@ -123,6 +141,10 @@ async def handle_random_message(update: Update, context: ContextTypes.DEFAULT_TY
 async def main():
     global bot_application
     
+    print("Starting bot application...")
+    print(f"Webhook URL: {WEBHOOK_URL}")
+    print(f"Port: {PORT}")
+    
     # 创建 Application 对象
     bot_application = Application.builder().token(TOKEN).build()
 
@@ -138,18 +160,27 @@ async def main():
     app.router.add_post(f'/{TOKEN}', handle_webhook)
 
     # 设置 webhook
-    await setup_webhook(app, TOKEN)
+    if WEBHOOK_URL:
+        await setup_webhook(app, TOKEN)
+    else:
+        print("Warning: WEBHOOK_URL is not set. Running in polling mode...")
+        await bot_application.initialize()
+        await bot_application.start()
+        await bot_application.run_polling()
+        return
 
     # 启动 web 服务器
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', PORT)
+    
+    print(f"Starting web server on port {PORT}...")
     await site.start()
+    print("Web server started successfully!")
     
-    print(f"Bot webhook server is running on port {PORT}")
-    
-    # 保持应用运行
     try:
+        # 保持应用运行
+        print("Bot is ready to accept updates!")
         await asyncio.Event().wait()
     except Exception as e:
         print(f"Error: {e}")
