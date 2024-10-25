@@ -129,7 +129,7 @@ async def handle_random_message(update: Update, context: ContextTypes.DEFAULT_TY
 
     await update.message.reply_text(response)
 
-async def main_async():
+def main():
     # 创建 Application 对象并设置 Token
     application = Application.builder().token(TOKEN).build()
 
@@ -151,26 +151,7 @@ async def main_async():
 
     # 启动机器人
     print("机器人正在启动...")
-    await application.run_polling()
-
-def main():
-    """启动 Telegram 机器人"""
-    # 获取当前事件循环
-    loop = asyncio.get_event_loop()
-    
-    try:
-        # 检查事件循环是否已经运行
-        if loop.is_running():
-            # 如果事件循环已经运行，创建一个任务
-            loop.create_task(main_async())
-        else:
-            # 如果事件循环未运行，运行主协程
-            loop.run_until_complete(main_async())
-    except RuntimeError as e:
-        if "already running" in str(e):
-            loop.create_task(main_async())
-        else:
-            raise
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
