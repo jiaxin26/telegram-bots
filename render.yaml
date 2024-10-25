@@ -1,6 +1,0 @@
-services:
-  - type: background
-    name: telegram-bot
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python pepe_bot1.py"
