@@ -129,7 +129,7 @@ async def handle_random_message(update: Update, context: ContextTypes.DEFAULT_TY
 
     await update.message.reply_text(response)
 
-def main() -> None:
+async def main_async():
     # 创建 Application 对象并设置 Token
     application = Application.builder().token(TOKEN).build()
 
@@ -150,6 +150,10 @@ def main() -> None:
     # 启动机器人
     print("机器人正在启动...")
     application.run_polling()
+
+def main():
+    """启动 Telegram 机器人"""
+    asyncio.run(main_async())
 
 if __name__ == '__main__':
     main()
