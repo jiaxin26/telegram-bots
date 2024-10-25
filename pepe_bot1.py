@@ -138,7 +138,7 @@ async def main_async():
     application.add_handler(start_handler)
 
     # 添加 /list 命令处理器
-    list_handler = CommandHandler('list', list_logs)
+    list_handler = CommandHandler('list', list)
     application.add_handler(list_handler)
 
     # 添加回调查询处理器
